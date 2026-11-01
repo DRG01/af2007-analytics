@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="AF2007 Portfolio Analytics Tool", layout="wide")
 
-st.title("AF2007 Portfolio Management Dashboard")
+st.title("AF2007 Principles of Investment and Portfolio Management Dashboard")
 st.markdown("### Markowitz Efficient Frontier & Capital Market Line Simulator")
-st.write("Designed by Dr. G. Charles-Cadogan | Module: AF2007 Portfolio Management")
+st.write("Designed by Dr. G. Charles-Cadogan | Module: AF2007 2026-2027 SEM1")
 
 # Sidebar Configuration for Portfolio Parameters
 st.sidebar.header("Asset Calibration Parameters")
