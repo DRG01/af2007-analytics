@@ -5,11 +5,12 @@ import pandas as pd
 # Set up page configurations
 st.set_page_config(page_title="FCFF & FCFE Interactive Dashboard", layout="wide")
 
-st.title("📊 Free Cash Flow Interactive Valuation Dashboard")
+st.title("AF2007 Free Cash Flow Interactive Valuation Dashboard")
 st.markdown("""
-This dashboard helps students visualize how operating, investing, and financing decisions 
+This dashboard helps you visualize how operating, investing, and financing decisions 
 impact **Free Cash Flow to the Firm (FCFF)** vs. **Free Cash Flow to Equity (FCFE)**.
 """)
+st.write("Designed by Dr. G. Charles-Cadogan | Module: AF2007 2026-2027 SEM1")
 
 # -------------------------------------------------------------
 # SIDEBAR - INPUT SLIDERS
@@ -106,7 +107,7 @@ with col2:
 # QUICK INTERACTIVE WALKTHROUGH INSIGHTS FOR THE CLASSROOM
 # -------------------------------------------------------------
 st.markdown("---")
-st.subheader("💡 Key Classroom Takeaways to Point Out:")
+st.subheader("💡 Key Takeaways:")
 st.info(f"""
 * **The Leverage Effect:** Notice that changing **Net Borrowing** or **Interest Expense** alters your final **FCFE (£{fcfe:,.1f}M)** but leaves your **FCFF (£{fcff:,.1f}M)** completely unchanged. This visually proves to students that FCFF is *unlevered*.
 * **Non-Cash Add-backs:** Increasing **Depreciation** improves both metrics uniformly without altering operational EBIT performance.
