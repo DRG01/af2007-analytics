@@ -107,8 +107,8 @@ with col2:
 # QUICK INTERACTIVE WALKTHROUGH INSIGHTS FOR THE CLASSROOM
 # -------------------------------------------------------------
 st.markdown("---")
-st.subheader("💡 Key Takeaways:")
+st.subheader("Key Takeaways:")
 st.info(f"""
-* **The Leverage Effect:** Notice that changing **Net Borrowing** or **Interest Expense** alters your final **FCFE (£{fcfe:,.1f}M)** but leaves your **FCFF (£{fcff:,.1f}M)** completely unchanged. This visually proves to students that FCFF is *unlevered*.
+* **The Leverage Effect:** Notice that changing **Net Borrowing** or **Interest Expense** alters your final **FCFE (£{fcfe:,.1f}M)** but leaves your **FCFF (£{fcff:,.1f}M)** completely unchanged. This visually proves that FCFF is *unlevered*.
 * **Non-Cash Add-backs:** Increasing **Depreciation** improves both metrics uniformly without altering operational EBIT performance.
 """)
