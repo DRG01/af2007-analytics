@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-# 1. Page Configuration
+# 1. Page Configuration okay
 st.set_page_config(page_title="RegTech Penalty Supervisor", layout="wide")
 st.title("The Penalised Regulator: Supervisory Risk Triage Dashboard")
 st.markdown("### Data-Driven Early-Warning & Penalty Threshold Simulator")
