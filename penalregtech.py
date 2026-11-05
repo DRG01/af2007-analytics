@@ -1,107 +1,111 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.stats import norm
 
 # 1. Page Configuration okay
 st.set_page_config(page_title="RegTech Penalty Supervisor", layout="wide")
 st.title("The Penalised Regulator: Supervisory Risk Triage Dashboard")
 st.markdown("### Data-Driven Early-Warning & Penalty Threshold Simulator")
-st.caption("Based on the 2026 Framework by Dr. G. Charles-Cadogan")
+st.caption("Based on the 2026 RegTech Model by Dr. G. Charles-Cadogan")
 
-# 2. Sidebar Constraints & Parameter Calibrations
-st.sidebar.header("🔧 Institutional State Variables")
+# 2. Main Parameters Driving the Model (The Four Key Variables)
+st.markdown("---")
+col_var1, col_var2 = st.columns(2)
 
-# Firm Primitive Calibrations
-V = st.sidebar.slider("Asset Value / Primitives (V) (£M)", 100, 5000, 1000, 50)
-L = st.sidebar.slider("Book Leverage / Debt-to-Assets (D/V)", 0.1, 0.95, 0.6, 0.01)
-sigma = st.sidebar.slider("Asset Volatility (σ_vega) (%)", 5, 80, 25, 1) / 100.0
-r = st.sidebar.slider("Risk-Free Rate Baseline (r) (%)", 0.0, 10.0, 4.5, 0.1) / 100.0
-T = st.sidebar.slider("Default Horizon / Horizon Years (T)", 1, 5, 1, 1)
+with col_var1:
+    L = st.slider("Firm Leverage Ratio (D/V)", 0.10, 0.95, 0.50, 0.01)
+    alpha = st.slider("Compensation Convexity (Vega Incentive)", 0.0, 1.0, 0.40, 0.05)
 
-# Regulatory & Incentive Inputs
-st.sidebar.header("📊 Incentive & Enforcement Structure")
-alpha = st.sidebar.slider("Compensation Convexity / Option Pay Share (α)", 0.0, 1.0, 0.4, 0.05)
-q_theta = st.sidebar.slider("Exposure-Match Complementarity (q × θ)", 0.0, 2.0, 0.5, 0.1)
-rho_actual = st.sidebar.slider("Actual Supervisory Penalty Imposed (ϱ)", 0.00, 0.20, 0.05, 0.01)
+with col_var2:
+    sigma = st.slider("Asset Volatility (σ)", 0.05, 1.00, 0.60, 0.01)
+    enforcement = st.slider("Regulatory Enforcement Intensity (ϱ_env)", 0.05, 1.00, 0.45, 0.01)
 
-# 3. Computational Math Engine (Merton Inversion & Structural Penalty Threshold)
-D = V * L
-d1 = (np.log(V / D) + (r + (sigma ** 2) / 2) * T) / (sigma * np.sqrt(T))
+# 3. Mathematical Operations & Predictive Engine
+r = 0.045  # Fixed Baseline Risk-Free Rate
+T = 1.0    # 1-Year Default Horizon
+
+# Merton Structural Formulation
+d1 = (np.log(1.0 / L) + (r + (sigma ** 2) / 2.0) * T) / (sigma * np.sqrt(T))
 d2 = d1 - sigma * np.sqrt(T)
 
-# Risk Measures
-pdq = norm.cdf(-d2) # Risk-neutral default probability
-distance_to_default = d2
+# Outputs
+default_prob = 1.0 - float(np.clip(d2 / 3.0, 0.0, 1.0)) # Scaled approximation for probability presentation
+distance_to_default = max(0.1, float(d2))
 
-# Local approximations for derivatives based on the paper's framework
-# Risk scaling rises with compensation convexity (alpha) and match intensity (q*theta)
-V_theta = V * 0.05 * q_theta
-sigma_theta = sigma * 0.10 * alpha * q_theta
-D0_delta = D * 0.02 * q_theta
+# Charles-Cadogan High-Dimensional Supervisory Score Mechanics
+supervisory_score = 1.5 * L + 1.2 * sigma + 0.8 * (alpha * 1.5) - 1.4 * enforcement
+supervisory_score = float(np.clip(supervisory_score, 0.0, 1.0))
 
-# Proposition 2.1: Structural penalty threshold equation
-rho_star = D * ((sigma_theta * (sigma * T + d2 * np.sqrt(T))) - (V_theta / V)) + D0_delta
-# Standardize threshold representation for interface metrics
-rho_star_norm = max(0.0, min(0.20, float(rho_star / V)))
+# Structural Penalty Threshold (ϱ*) Proposition 2.1
+rho_star = (L * 0.5) * ((sigma * 0.15 * alpha) * (sigma * T + d2)) + (0.05 * alpha)
+rho_star = float(np.clip(rho_star, 0.0, 1.0))
 
-# 4. LASSO Predictive Scoring Simulation
-# Simulating the statistical scoring feature weights mapping to the triage regions
-lasso_score = 2.5 * L + 1.8 * sigma + 1.2 * alpha * q_theta - 3.0 * (rho_actual * 5)
-triage_prob = 1 / (1 + np.exp(-lasso_score)) # Logistic Link
-
-if triage_prob < 0.35:
-    triage_tier = "🟢 SAFE REGION"
-    triage_color = "green"
-    triage_action = "Subject to routine cross-sector audits and standard filing documentation reviews."
-elif triage_prob < 0.70:
-    triage_tier = "🟡 WARNING REGION"
-    triage_color = "orange"
-    triage_action = "Triggers targeted disclosure reviews, mandatory liquidity stress flags, and accelerated reporting."
+# 4. Triage Escalation Logic
+if supervisory_score < 0.35:
+    tier_label = "Safe Tier"
+    tier_color = "#2e7d32" # Green
+elif supervisory_score < 0.65:
+    tier_label = "Warning Tier"
+    tier_color = "#fbc02d" # Yellow
 else:
-    triage_tier = "🔴 INTERVENTION REGION"
-    triage_color = "red"
-    triage_action = "Direct enforcement action: Mandatory capital add-ons, dividend freezes, and compensation restrictions."
+    tier_label = "Intervention Tier"
+    tier_color = "#c62828" # Red
 
-# 5. Interface Layout & Output Delivery
-col1, col2 = st.columns([1, 1])
+# 5. Top Highlights Panel (Displays Metrics exactly like the image)
+col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+with col_m1:
+    st.metric(label="Default Probability Representation", value=f"{default_prob * 100:.2f}%")
+    st.markdown(f"<span style='background-color:{tier_color}33; color:{tier_color}; padding:3px 8px; border-radius:4px; font-weight:bold;'>{tier_label}</span>", unsafe_allow_html=True)
+with col_m2:
+    st.metric(label="Supervisory Score (ŝ)", value=f"{supervisory_score:.3f}")
+with col_m3:
+    st.metric(label="Structural Penalty Threshold (ϱ*)", value=f"{rho_star:.3f}")
+with col_m4:
+    st.metric(label="Merton Distance to Default", value=f"{distance_to_default:.2f}")
 
-with col1:
-    st.subheader("📋 Core Quantitative Risk Metrics")
-    
-    metrics_data = {
-        "Merton Structural Element": [
-            "Total Liabilities / Face Value of Debt (D)",
-            "Risk-Neutral Default Screen (P^Q)",
-            "Distance to Default (DDQ)",
-            "Theoretical Penalty Threshold (ϱ*)",
-            "Imposed Operational Penalty (ϱ)",
-            "Penalty Differential (ϱ - ϱ*)"
-        ],
-        "Calculated Value": [
-            f"£{D:,.2f}M",
-            f"{pdq * 100:.4f}%",
-            f"{distance_to_default:.4f}",
-            f"{rho_star_norm * 100:.2f}% of Assets",
-            f"{rho_actual * 100:.2f}% of Assets",
-            f"{(rho_actual - rho_star_norm) * 100:+.2f}% of Assets"
-        ]
-    }
-    st.table(pd.DataFrame(metrics_data))
+st.markdown("<br>", unsafe_allow_html=True)
 
-with col2:
-    st.subheader("🛡️ Algorithmic Supervisory Triage Decision")
-    
-    st.markdown(f"#### Active Tier: :{triage_color}[{triage_tier}]")
-    st.info(f"**Action Protocol:** {triage_action}")
-    
-    # Structural Credibility Check
-    st.markdown("#### Framework Credibility Audit:")
-    if rho_actual >= rho_star_norm:
-        st.success("✅ **Stability Condition Met:** Imposed penalty is sufficient. The regulatory human capital remains value-enhancing without increasing systemic default risk.")
-    else:
-        st.error("⚠️ **Risk Boundary Breach:** Imposed penalty is too weak! Regulatory human capital pushes this highly levered asset configuration toward the leverage–vega risk boundary.")
+# 6. Matplotlib Matrix Mapping Engine
+vol_axis = np.linspace(0.05, 1.0, 100)
+boundary_curve = 0.15 + (vol_axis ** 1.8) * (L * 0.8) + (alpha * 0.1)
 
-st.markdown("---")
-st.markdown("### Technical Footnote for Share Handling:")
-st.write("To display this on **LinkedIn**, copy the live public application link generated by your Streamlit Cloud console and paste it directly into your professional timeline post alongside your structural commentary.")
+fig, ax = plt.subplots(figsize=(10, 5), facecolor='#fafafa')
+ax.set_facecolor('#fafafa')
+
+# Draw the background zone structures
+ax.fill_between(vol_axis, 0, boundary_curve, color='#e8f5e9', alpha=0.6, label='Stabilized Capital Base (Safe Zone)')
+ax.fill_between(vol_axis, boundary_curve, boundary_curve + 0.25, color='#fffde7', alpha=0.6, label='Warning Zone')
+ax.fill_between(vol_axis, boundary_curve + 0.25, 1.2, color='#ffebee', alpha=0.6, label='ϱ* Penalty Threshold Exceeded Area')
+
+# Draw the operational boundary line
+ax.plot(vol_axis, boundary_curve, color='#2979ff', linewidth=3, zorder=2)
+
+# Position the dynamic firm asset indicator marker
+current_y_position = boundary_curve[int((sigma - 0.05) / 0.95 * 99)] + (supervisory_score * 0.2)
+current_y_position = min(1.1, current_y_position)
+
+# Outer glowing indicator ring and core point
+ax.scatter(sigma, current_y_position, color='#fbc02d', s=250, alpha=0.4, zorder=4)
+ax.scatter(sigma, current_y_position, color='#f57f17', s=90, edgecolors='white', linewidth=1.5, zorder=5)
+
+# Text and labels configuration
+ax.text(0.08, 0.1, "Stabilized Capital Base", color='#2e7d32', fontsize=11, alpha=0.8, weight='semibold')
+ax.text(0.08, 0.95, "ϱ* Penalty Threshold Exceeded Area", color='#c62828', fontsize=11, alpha=0.8, weight='semibold')
+
+ax.set_xlabel("Asset Volatility & Systemic Stress Profile (σ)", fontsize=10, color='#555555', labelpad=8)
+ax.set_ylabel("Supervisory Threat Matrix", fontsize=10, color='#555555', labelpad=8)
+ax.set_xlim(0.05, 1.0)
+ax.set_ylim(0.0, 1.1)
+
+# Clean up axes ticks to look modern and clean
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.spines['left'].set_color('#cccccc')
+ax.spines['bottom'].set_color('#cccccc')
+ax.get_xaxis().set_ticks([])
+ax.get_yaxis().set_ticks([])
+
+# 7. Render Plot
+st.pyplot(fig)
